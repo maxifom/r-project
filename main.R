@@ -3,10 +3,12 @@ library(tidyr)
 library(plyr)
 #library(tidyverse)
 library(rworldmap)
+library("ggspatial")
 #library(raster)
-#library(sf)
-#library(spData)
-#library(spDataLarge)
+library(sf)
+library(ggplot2)
+library(spData)
+library(spDataLarge)
 #install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source", Ncpus = 8)
 df = read.csv("obesity-cleaned.csv")
 # Replace column names
@@ -30,3 +32,13 @@ df_afg_female = df %>% filter(name == 'Afghanistan' & sex == 'Female')
 plot(df_afg_all$year, df_afg_all$obesity, col = 'green', xlab = "Both sexes", ylab = "Obesity %")
 points(df_afg_male$year, df_afg_male$obesity, col = 'blue', xlab = "Male")
 points(df_afg_female$year, df_afg_female$obesity, col = 'red', xlab = "Female")
+
+my_base <- ggplot() + coord_fixed() +
+  xlab("") + ylab("")
+
+my_base
+
+our_world <- map_data("world")
+
+my_base + geom_polygon(data = our_world, aes(x = long, y = lat, group = group),
+                       colour = "light green", fill = "light green")
