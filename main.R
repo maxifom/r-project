@@ -1,18 +1,20 @@
 library(dplyr)
 library(tidyr)
 library(plyr)
-#library(tidyverse)
-library(rworldmap)
-library("ggspatial")
-#library(raster)
-library(sf)
+
+library(anomalize)
+library(tibble)
+library(tibbletime)
 library(ggplot2)
-library(spData)
-library(spDataLarge)
-#install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source", Ncpus = 8)
+library(cowplot)
+suppressMessages(suppressWarnings(library(dplyr)))
+
+
 df = read.csv("obesity-cleaned.csv")
 # Replace column names
 names(df) = c('id', 'name', 'year', 'obesity', 'sex')
+
+countries = distinct(df, name)
 
 # Filter No data
 df = df %>% filter(obesity != 'No data')
@@ -20,25 +22,42 @@ df = df %>% filter(obesity != 'No data')
 # Clean obesity column and convert to float
 df = df %>%
   separate("obesity", "obesity", sep = " ", remove = TRUE, convert = TRUE) %>%
-  transform(obesity = as.double(obesity))
+  transform(obesity = as.double(obesity)) %>%
+  mutate(date = as.Date(ISOdate(year, 1, 1)))
 
-df_countries = read.csv("countries.csv", sep = ",")
 
-df = join(df, df_countries, by = 'name', type = "inner")
+#df_countries = read.csv("countries.csv", sep = ",")
+#
+#df = join(df, df_countries, by = 'name', type = "inner")
 
-df_afg_all = df %>% filter(name == 'Afghanistan' & sex == 'Both sexes')
-df_afg_male = df %>% filter(name == 'Afghanistan' & sex == 'Male')
-df_afg_female = df %>% filter(name == 'Afghanistan' & sex == 'Female')
-plot(df_afg_all$year, df_afg_all$obesity, col = 'green', xlab = "Both sexes", ylab = "Obesity %")
-points(df_afg_male$year, df_afg_male$obesity, col = 'blue', xlab = "Male")
-points(df_afg_female$year, df_afg_female$obesity, col = 'red', xlab = "Female")
+country_name = "United States of America"
+sexes = list("Both sexes", "Male", "Female")
 
-my_base <- ggplot() + coord_fixed() +
-  xlab("") + ylab("")
+plots = list()
+i = 1
+first = TRUE
+for (s in sexes) {
+  df_country_sex = df %>% filter(name == country_name & sex == s)
 
-my_base
+  df_obesity = df_country_sex %>%
+    as_tbl_time(index = date) %>%
+    as_period("yearly")
 
-our_world <- map_data("world")
+  tdf_obesity = df_obesity %>%
+    time_decompose(obesity) %>%
+    anomalize(remainder) %>%
+    time_recompose() %>%
+    plot_anomalies(time_recomposed = TRUE, alpha_dots = 1, color_no = "#228B22", color_yes = "red") +
+    labs(title = country_name, subtitle = s) +
+    xlab("Year")
+  if (first) {
+    tdf_obesity = tdf_obesity + ylab("Obesity %")
+    first = FALSE
+  } else {
+    tdf_obesity = tdf_obesity + ylab("")
+  }
+  plots[[i]] = tdf_obesity
+  i = i + 1
+}
 
-my_base + geom_polygon(data = our_world, aes(x = long, y = lat, group = group),
-                       colour = "light green", fill = "light green")
+grid.arrange(plots[[1]], plots[[2]], plots[[3]], ncol = 3)
