@@ -9,14 +9,11 @@ library(ggplot2)
 library(cowplot)
 library(gridExtra)
 library(purrr)
-suppressMessages(suppressWarnings(library(dplyr)))
 
 
 df = read.csv("obesity-cleaned.csv")
 # Replace column names
 names(df) = c('id', 'name', 'year', 'obesity', 'sex')
-
-countries = distinct(df, name)
 
 # Filter No data
 df = df %>% filter(obesity != 'No data')
