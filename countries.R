@@ -39,7 +39,8 @@ for (year in years) {
     df2 = ggplot(df1) +
       geom_sf(aes(fill = obesity)) +
       theme(panel.background = element_rect(fill = 'azure'), legend.position = "bottom") +
-      scale_fill_gradientn(colours = heat.colors(10, rev = TRUE))
+      scale_fill_gradientn(colours = heat.colors(10, rev = TRUE)) +
+      labs(title = sprintf("%d Obesity %%", year), subtitle = s)
     plots[[i]] = df2
     i = i + 1
   }
@@ -49,13 +50,13 @@ f = partial(arrangeGrob, ncol = 3, nrow = 3)
 
 
 q = do.call(f, plots[1:9])
-ggsave(file = "1.png", q)
+ggsave(file = "pdfs/geo_1975-1985.pdf", q)
 
 q = do.call(f, plots[10:18])
-ggsave(file = "2.png", q)
+ggsave(file = "pdfs/geo_1990-2000.pdf", q)
 
 q = do.call(f, plots[19:27])
-ggsave(file = "3.png", q)
+ggsave(file = "pdfs/geo_2005-2015.pdf", q)
 
 
 
