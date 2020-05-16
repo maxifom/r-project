@@ -3,14 +3,14 @@ library(tidyr)
 library(sf)
 library(spData)
 library(plyr)
-library(hash)
 library(ggplot2)
 library(tidyverse)
+library(ggplotify)
+library(gridExtra)
 df = read.csv("obesity-cleaned.csv")
 # Replace column names
-names(df) = c('id', 'name', 'year', 'obesity', 'sex')
+names(df) = c('id', 'name_long', 'year', 'obesity', 'sex')
 
-countries = distinct(df, name)
 
 # Filter No data
 df = df %>% filter(obesity != 'No data')
@@ -22,45 +22,41 @@ df = df %>%
   mutate(date = as.Date(ISOdate(year, 1, 1)))
 
 
-w = world %>% select(name_long, geom)
-names(w) = c('name', 'geom')
+df_with_countries = merge(world, df, by = "name_long")
 
-h = hash()
+sexes = c("Male", "Female", "Both sexes")
 
-h[["Bolivia"]] = "Bolivia (Plurinational State of)"
-h[["Czech Republic"]] = "Czechia"
-h[["Dem. Rep. Korea"]] = "Democratic People's Republic of Korea"
-h[["eSwatini"]] = "Eswatini"
-h[["The Gambia"]] = "Gambia"
-h[["Iran"]] = "Iran (Islamic Republic of)"
-h[["Lao PDR"]] = "Lao People's Democratic Republic"
-h[["Moldova"]] = "Republic of Moldova"
-h[["Macedonia"]] = "Republic of North Macedonia"
+years = c(1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015)
 
-h[["Syria"]] = "Syrian Arab Republic"
-h[["United Kingdom"]] = "United Kingdom of Great Britain and Northern Ireland"
-h[["Tanzania"]] = "United Republic of Tanzania"
-h[["United States"]] = "United States of America"
-h[["Venezuela"]] = "Venezuela (Bolivarian Republic of)"
-h[["Vietnam"]] = "Viet Nam"
+plots = list()
+i = 1
 
-
-for (k in keys(h)) {
-  w$name[w$name == k] = h[[k]]
+for (year in years) {
+  for (s in sexes) {
+    df1 = df_with_countries %>%
+      filter(year == year & sex == s) %>%
+      select(obesity)
+    df2 = ggplot(df1) +
+      geom_sf(aes(fill = obesity)) +
+      theme(panel.background = element_rect(fill = 'azure'), legend.position = "bottom") +
+      scale_fill_gradientn(colours = heat.colors(10, rev = TRUE))
+    plots[[i]] = df2
+    i = i + 1
+  }
 }
 
-df_with_countries = merge(df, w, by = "name")
+f = partial(arrangeGrob, ncol = 3, nrow = 3)
 
-d = df_with_countries %>% filter(year==1975 & sex == "Male") %>% group_by(name)
-plot(d)
-world %>% select(name_long) %>% plot()
-plot(df_with_countries)
-world = join()
 
-my_base <- ggplot() + coord_fixed() +
-  xlab("") + ylab("")
+q = do.call(f, plots[1:9])
+ggsave(file = "1.png", q)
 
-our_world <- map_data("world")
-world_plot = my_base + geom_polygon(data=our_world, aes(x=long, y=lat, group=group))
+q = do.call(f, plots[10:18])
+ggsave(file = "2.png", q)
 
-world_plot + geom_area(data=df_with_countries, aes(x=geom[0][0], y=geom[0][1]))
+q = do.call(f, plots[19:27])
+ggsave(file = "3.png", q)
+
+
+
+

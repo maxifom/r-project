@@ -7,6 +7,7 @@ library(tibble)
 library(tibbletime)
 library(ggplot2)
 library(cowplot)
+library(gridExtra)
 suppressMessages(suppressWarnings(library(dplyr)))
 
 
@@ -30,7 +31,7 @@ df = df %>%
 #
 #df = join(df, df_countries, by = 'name', type = "inner")
 
-country_name = "United States of America"
+country_name = "United States"
 sexes = list("Both sexes", "Male", "Female")
 
 plots = list()
@@ -56,8 +57,20 @@ for (s in sexes) {
   } else {
     tdf_obesity = tdf_obesity + ylab("")
   }
+
+  print(typeof(tdf_obesity))
+  print(mode(tdf_obesity))
+  print(class(tdf_obesity))
   plots[[i]] = tdf_obesity
   i = i + 1
 }
 
-grid.arrange(plots[[1]], plots[[2]], plots[[3]], ncol = 3)
+f = partial(grid.arrange, ncol=3)
+do.call(f, plots)
+
+
+
+
+
+
+
