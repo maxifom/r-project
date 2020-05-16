@@ -4,7 +4,8 @@ library(sf)
 library(spData)
 library(plyr)
 library(hash)
-
+library(ggplot2)
+library(tidyverse)
 df = read.csv("obesity-cleaned.csv")
 # Replace column names
 names(df) = c('id', 'name', 'year', 'obesity', 'sex')
@@ -49,3 +50,17 @@ for (k in keys(h)) {
 }
 
 df_with_countries = merge(df, w, by = "name")
+
+d = df_with_countries %>% filter(year==1975 & sex == "Male") %>% group_by(name)
+plot(d)
+world %>% select(name_long) %>% plot()
+plot(df_with_countries)
+world = join()
+
+my_base <- ggplot() + coord_fixed() +
+  xlab("") + ylab("")
+
+our_world <- map_data("world")
+world_plot = my_base + geom_polygon(data=our_world, aes(x=long, y=lat, group=group))
+
+world_plot + geom_area(data=df_with_countries, aes(x=geom[0][0], y=geom[0][1]))
