@@ -21,7 +21,7 @@ df = df %>%
   transform(obesity = as.double(obesity)) %>%
   mutate(date = as.Date(ISOdate(year, 1, 1)))
 
-
+# Merge with world geo data
 df_with_countries = merge(world, df, by = "name_long")
 
 sexes = c("Male", "Female", "Both sexes")
